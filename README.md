@@ -1,68 +1,219 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Article Blog
+Users can view articles, add comments and upvote for each article.
 
-## Available Scripts
+## Getting Started
+```
+ $npm start
+ ```
+### Prerequisites
+1.To create node modules:
+```
+$ npm init -y
+$ npm install --save express 
+$ npm install --save-dev @babel/core @babel/node @babel/preset-env
 
-In the project directory, you can run:
+```
+2. Then create a folder named 'src' including  file named 'server.js'
+3. Then create this file inside src folder: ".babelrc"
+4. Inside ".bablerc" file write this and save:
+```
+{
+    "presets": ["@babel/preset-env"]
+}
+```
+5. To run our express application:
+```
+$ npx babel-node src/server.js
 
-### `yarn start`
+```
+6. For being able to use json data in our code:
+```
+$npm install --save body-parser
+$npm install --save-dev nodemon
 
-Runs the app in the development mode.<br />
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+```
 
-The page will reload if you make edits.<br />
-You will also see any lint errors in the console.
 
-### `yarn test`
+After installing nodemon we should use this command for starting the server:
+```
+$ npx nodemon --exec npx babel-node src/server.js
 
-Launches the test runner in the interactive watch mode.<br />
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```
+Then add this line to package.json of my-blog-backend in the script section:
 
-### `yarn build`
+```
+"start":"npx nodemon --exec npx babel-node src/server.js"
 
-Builds the app for production to the `build` folder.<br />
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```
+we can now just type
+```
+$npm start
 
-The build is minified and the filenames include the hashes.<br />
-Your app is ready to be deployed!
+```
+to start the server!
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Our server is now listening on port 8000
+### To add mongodb to our project:
+```
+$npm install --save mongodb
+```
 
-### `yarn eject`
+### To use fetch api for internet explorer users:
+In the front-end folder(my-blog2):
+```
+$npm install --save whatwg-fetch
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+```
+Then we need to import 'whatwg-fetch' so do this in the index.js file which is created by default:
+ ```
+ import 'whatwg-fetch';
+ 
+ ```
+## To prepare our application for release in AWS services:
+1. Navigate to my-blog2(front-end) folder, then
+```
+ $npm run build 
+ 
+``` 
+  - The above command helps us to run both front-end and backend in localhost:8000 along with the DB.
+2. Then copy the "build" folder and paste it in my-blog-backend folder.
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+3. In the my-blog-backend folder, go to server.js and add these lines:
+```
+const path=require ('path');
+app.use(express.static(path.join(__dirname, '/build')));
+```
+Add this line at the end of last path:
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+```
+app.get('*', (req,res) =>{
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+    res.sendFile(path.join(__dirname + '/build/index.html'));
+})
 
-## Learn More
+```
+Then to test if our website is still working, type : http://localhost:8000 in URL
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+After uploading our project in GitHub, next step is launching the EC2 on [AWS Console](https://aws.amazon.com/console/).
+### On AWS do:
+1. Now go to AWS EC2, Launch a new instance with default settings
+2. Download and Save the shared key
+3. create a folder in this directory on your local machine: users/username/.ssh 
+4. cut and pase the .pem(key) file into this folder
+5. In a linux shell, navigate to .ssh folder and run:
+```
+$ chmod 400 ~/.ssh/article-blog.pem
+```
+6. Go to your EC2 created instance, copy the public dns address and paste it after the @ in your linux shell:
+```
+$ ssh -i ~/.ssh/nnnn.pem ec2-user@ec2-nnnnnnn.compute-1.amazonaws.com
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+```
+7. It then asks if we want to continue connecting to the server, type "yes".
+ ### On our EC2 instance we need to install a few stuff:
+1. Install git:
+```
+$sudo yum install git
 
-### Code Splitting
+```
+To see AWS tutorial about [how to set up node.js on  EC2 instance](https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/setting-up-node-on-ec2-instance.html).
+2. To set up node.js on our EC2 instance:
+  - Install node version manager(nvm) by typing the following command:
+  ```
+  $curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
+  ```
+  - We will use nvm to install Node.js because nvm can install multiple versions of Node.js and allow you to switch between them.
+  - Activate nvm by typing the following at the command line.
+  
+  ```
+  $ . ~/.nvm/nvm.sh
+  
+  ```
+  
+  - check the node version we were working with for our project in terminal on your local machine before installing node on EC2:
+  ```
+  $ node -v
+  
+  ```
+  - Then in the Linux shell type:
+  
+  ```
+  $nvm install 10.15.0
+  $npm install -g npm@latest
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
+  ```
+3. Then we have to install Mongodb on our EC2 instance, check the followin link for more information:
+[Install MongoDB Community Edition on Amazon Linux](https://docs.mongodb.com/manual/tutorial/install-mongodb-on-amazon/)
 
-### Analyzing the Bundle Size
+  - Create a /etc/yum.repos.d/mongodb-org-4.2.repo file so that you can install MongoDB directly using yum:
+  ```
+  $sudo nano  /etc/yum.repos.d/mongodb-org-4.2.repo
+  
+  ```
+  - Paste this in the nano environment:
+  ```
+  [mongodb-org-4.2]
+  name=MongoDB Repository
+  baseurl=https://repo.mongodb.org/yum/amazon/2/mongodb-org/4.2/x86_64/
+  gpgcheck=1
+  enabled=1
+  gpgkey=https://www.mongodb.org/static/pgp/server-4.2.asc
+  
+  ```
+  ctrl + o to save
+  ctrl +x to exit
+  
+  - Again in the ssh terminal:
+  ```
+  $sudo yum install -y mongodb-org
+  
+  ```
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
+  - To check if Mongodb is working on the server:
 
-### Making a Progressive Web App
+  ```
+   $sudo service mongod start
+   
+  ```
+  - Then create some data in mongodb database
+  - Then we have to clone our project, go to github and click on clone/download:
+  - In the ssh terminal:
+  ```
+  $git clone https://github.com/sarahmgh7212/article-blog.git
+ 
+  ```
+4. Then we have to install node modules, so navigate to article-blog on the server:
+```
+$npm install
+$npm install -g forever
+$ forever start -c "npm start" 
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
+```
+  - To check if its running:
+  
+  ```
+  $forever list
+  
+  ```
+  - we should see this as a result for a successful installation :
+info:    Forever processes running
+data:        uid  command   script                      forever pid  id logfile                          uptime
 
-### Advanced Configuration
+ oEKp npm start /home/ec2-user/article-blog 4537    4544    /home/ec2-user/.forever/oEKp.log 0:0:0:18.005
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
+6. To be able to view the website with a public address and without login, we need to do some routing:
 
-### Deployment
+```
+$ sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-ports 8000
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
+```
+## Built With
+* [React.js] (https://reactjs.org/)
+* [Node.js] (https://nodejs.org/en/)
+* [Express.js] (https://expressjs.com/)
+* Rest APIs
+* [MongoDB] (https://www.mongodb.com/)
+* [AWS EC2] (https://aws.amazon.com/console/)
 
-### `yarn build` fails to minify
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
+## Contribution
+Sara Moghaddasian
